@@ -1,0 +1,251 @@
+<div class="home-container">
+  <app-profile-icon></app-profile-icon>
+
+  <h2>Available Supermarkets</h2>
+  <p class="subtitle">
+    Browse our network of supermarkets and discover great deals on your favorite products.
+  </p>
+
+  <div class="action-bar">
+    <button (click)="toggleOpenShop()" class="open-shop-btn">
+      🏪 Open New Supermarket
+    </button>
+
+    <label class="filter-checkbox" *ngIf="hasSupermarkets">
+      <input
+        type="checkbox"
+        [(ngModel)]="showMySupermarkets"
+        (change)="toggleMySupermarkets()"
+      />
+      Edit My Supermarkets
+    </label>
+
+    <button *ngIf="showTopSellingButton"class="chart-btn" (click)="topSellingItems()">
+      📊 View Top Selling Items
+    </button>
+  </div>
+
+  <div class="modal-backdrop" *ngIf="showOpenShopModal">
+    <div class="modal-window">
+      <h3>Open a New Supermarket</h3>
+
+      <div class="form-group">
+        <label>Name</label>
+        <input
+          [(ngModel)]="newSupermarket.name"
+          type="text"
+          placeholder="Enter supermarket name"
+        />
+      </div>
+
+      <div class="form-group">
+        <label>Location</label>
+        <input
+          [(ngModel)]="newSupermarket.location"
+          type="text"
+          placeholder="Enter location"
+        />
+      </div>
+
+      <div class="form-group">
+        <label>Contact</label>
+        <input
+          [(ngModel)]="newSupermarket.contact"
+          type="text"
+          placeholder="Enter contact number"
+        />
+      </div>
+
+      <div class="modal-actions">
+        <button (click)="toggleOpenShop()" class="cancel">Cancel</button>
+        <button (click)="openShop()" class="confirm">Open Shop</button>
+      </div>
+
+      <p *ngIf="openShopMessage" class="message">{{ openShopMessage }}</p>
+    </div>
+  </div>
+
+  <div *ngIf="loading" class="loading">Loading supermarkets...</div>
+  <div *ngIf="errorMessage" class="error">{{ errorMessage }}</div>
+  <div *ngIf="!loading && supermarkets.length === 0" class="empty">
+    No supermarkets available.
+  </div>
+
+  <div *ngIf="showMySupermarkets" class="supermarket-grid">
+    <div *ngFor="let supermarket of supermarkets" class="supermarket-card">
+
+      <div class="supermarket-content">
+        <div class="supermarket-image-upload">
+          <img
+            [src]="supermarket.supermarket_image"
+            class="supermarket-img"
+            alt="Supermarket Image"
+          />
+          <input
+            type="file"
+            (change)="onSupermarketImageSelected($event, supermarket)"
+            accept="image/*"
+          />
+          <button class="remove-btn" (click)="removeItemImage(supermarket)">
+            ❌ Remove
+          </button>
+        </div>
+
+        <div class="editable-field">
+          <label>Name:</label>
+          <div class="editable-value">
+            <input
+              *ngIf="editingField === 'name' + supermarket._id"
+              [(ngModel)]="supermarket.name"
+              type="text"
+            />
+            <span
+              *ngIf="editingField !== 'name' + supermarket._id"
+              >{{ supermarket.name }}</span
+            >
+            <button
+              *ngIf="editingField !== 'name' + supermarket._id"
+              (click)="editField('name' + supermarket._id)"
+              >✏️</button
+            >
+            <button
+              *ngIf="editingField === 'name' + supermarket._id"
+              (click)="saveField(supermarket, 'name')"
+              >💾</button
+            >
+          </div>
+        </div>
+
+        <div class="editable-field">
+          <label>Location:</label>
+          <div class="editable-value">
+            <input
+              *ngIf="editingField === 'location' + supermarket._id"
+              [(ngModel)]="supermarket.location"
+              type="text"
+            />
+            <span
+              *ngIf="editingField !== 'location' + supermarket._id"
+              >{{ supermarket.location }}</span
+            >
+            <button
+              *ngIf="editingField !== 'location' + supermarket._id"
+              (click)="editField('location' + supermarket._id)"
+              >✏️</button
+            >
+            <button
+              *ngIf="editingField === 'location' + supermarket._id"
+              (click)="saveField(supermarket, 'location')"
+              >💾</button
+            >
+          </div>
+        </div>
+
+        <div class="editable-field">
+          <label>Contact:</label>
+          <div class="editable-value">
+            <input
+              *ngIf="editingField === 'contact' + supermarket._id"
+              [(ngModel)]="supermarket.contact"
+              type="text"
+            />
+            <span
+              *ngIf="editingField !== 'contact' + supermarket._id"
+              >{{ supermarket.contact }}</span
+            >
+            <button
+              *ngIf="editingField !== 'contact' + supermarket._id"
+              (click)="editField('contact' + supermarket._id)"
+              >✏️</button
+            >
+            <button
+              *ngIf="editingField === 'contact' + supermarket._id"
+              (click)="saveField(supermarket, 'contact')"
+              >💾</button
+            >
+          </div>
+        </div>
+
+        <div class="delete-container">
+          <button
+            class="delete-btn"
+            (click)="deleteSupermarket(supermarket._id)"
+          >
+            🗑 Delete
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+    <div class="filter-bar" *ngIf="!showMySupermarkets">
+    <input
+      type="text"
+      placeholder="🏪 Search by Shop Name"
+      [(ngModel)]="filters.name"
+    />
+    <input
+      type="text"
+      placeholder="📍 Search by Location"
+      [(ngModel)]="filters.location"
+    />
+
+    <select [(ngModel)]="filters.sort_field">
+      <option value="name">Sort by Name</option>
+      <option value="location">Sort by Location</option>
+    </select>
+
+    <select [(ngModel)]="filters.sort_by">
+      <option value="asc">Ascending</option>
+      <option value="desc">Descending</option>
+    </select>
+
+    <button (click)="applyFilters()">Apply</button>
+    <button class="clear" (click)="clearFilters()">Clear</button>
+  </div>
+
+
+  <div *ngIf="!showMySupermarkets" class="supermarket-grid">
+    <div
+      *ngFor="let supermarket of supermarkets"
+      class="supermarket-card"
+      (click)="viewItems(supermarket._id)"
+    >
+      <div class="supermarket-banner">
+        <img
+          *ngIf="supermarket.supermarket_image && supermarket.supermarket_image.startsWith('http')"
+          [src]="supermarket.supermarket_image"
+          alt="{{ supermarket.name }} image"
+          class="supermarket-banner-image"
+          (error)="supermarket.supermarket_image = ''"
+        />
+        <div
+          *ngIf="!supermarket.supermarket_image || !supermarket.supermarket_image.startsWith('http')"
+          class="no-image-placeholder"
+        >
+          <span>{{ supermarket.name.charAt(0).toUpperCase() }}</span>
+        </div>
+      </div>
+
+      <div class="supermarket-content">
+        <h3>{{ supermarket.name }}</h3>
+        <p><strong>📍</strong> {{ supermarket.location }}</p>
+        <p><strong>📞</strong> {{ supermarket.contact }}</p>
+        <p><strong>👤 Manager:</strong> {{ supermarket.manager }}</p>
+        <p><strong>🕒 Opened:</strong> {{ supermarket.created_at | date: 'medium' }}</p>
+      </div>
+
+      <button class="view-btn">View Items</button>
+    </div>
+  </div>
+
+  <div class="pagination-controls">
+    <button (click)="prevPage()" [disabled]="currentPage === 1">← Prev</button>
+   <select [(ngModel)]="currentPage" (change)="goToPage()">
+      <option *ngFor="let p of pagesArray" [value]="p">
+        Page {{ p }}
+      </option>
+    </select>
+    <button (click)="nextPage()" [disabled]="currentPage === totalPages">Next →</button>
+  </div>
+</div>

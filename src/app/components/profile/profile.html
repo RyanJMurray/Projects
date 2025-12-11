@@ -1,0 +1,138 @@
+<div class="profile-page">
+<button class="back-button" (click)="home()">← Back to Supermarkets</button>
+<div class="profile-wrapper" *ngIf="user">
+  <div class="profile-section">
+    <h2>{{ user.name }}</h2>
+    <div class="profile-image-upload">
+      <img [src]="user.profile_image || 'assets/default-avatar.png'" class="profile-img" />
+      <input type="file" (change)="onFileSelected($event)" accept="image/*" />
+      <button 
+        *ngIf="user.profile_image" 
+        class="remove-image-btn" 
+        (click)="removeImage()">
+        ❌ Remove Image
+      </button>
+    </div>
+
+    <div class="profile-details">
+      <div class="field" *ngFor="let field of editableFields">
+        <label>{{ field.label }}:</label>
+
+        <input
+          *ngIf="editingField === field.key"
+          [(ngModel)]="user[field.key]"
+          type="text"
+          class="edit-input"
+        />
+        <span *ngIf="editingField !== field.key">{{ user[field.key] }}</span>
+
+        <button *ngIf="editingField !== field.key" (click)="editField(field.key)">✏️</button>
+        <button *ngIf="editingField === field.key" (click)="saveField(field.key)">💾</button>
+      </div>
+    </div>
+
+    <button class="reset-password" (click)="openPasswordModal()">Reset Password</button>
+
+    <button class="logout" (click)="logout()">Logout</button>
+
+    <button class="delete-account" (click)="deleteAccount()">Delete Account</button>
+  </div>
+
+  <div class="transactions-section">
+    <h2>Transaction History</h2>
+    <p *ngIf="transactions.length === 0">No transactions yet.</p>
+
+    <div class="transaction-card" *ngFor="let tx of transactions" (click)="openTransaction(tx)">
+      <div class="transaction-info">
+        <h3 class="supermarket">{{ tx.supermarkets?.join(', ') }}</h3>
+        <p class="date">{{ tx.purchase_date | date:'medium' }}</p>
+      </div>
+      <div class="transaction-total">
+        <span>£{{ tx.total_price | number:'1.2-2' }}</span>
+      </div>
+    </div>
+
+   <div class="pagination-controls" *ngIf="totalPages > 1">
+  <button (click)="prevPage()" [disabled]="currentPage === 1">← Prev</button>
+
+  <select [(ngModel)]="currentPage" (change)="goToPage()">
+      <option *ngFor="let p of pagesArray" [value]="p">
+        Page {{ p }}
+      </option>
+    </select>
+  <button (click)="nextPage()" [disabled]="currentPage === totalPages">Next →</button>
+</div>
+  </div>
+
+  <div class="deposit-section">
+  <h3>Deposit Money</h3>
+
+  <div class="deposit-form">
+    <input
+      type="number"
+      [(ngModel)]="depositAmount"
+      placeholder="Enter amount (£)"
+      min="1"
+    />
+    <button (click)="depositMoney()">Deposit</button>
+  </div>
+
+  <p class="deposit-message" *ngIf="depositMessage">{{ depositMessage }}</p>
+
+  <p class="balance">💷 Current Balance: £{{ user?.balance | number: '1.2-2' }}</p>
+</div>
+
+<div class="modal-backdrop transaction-details" *ngIf="showModal">
+  <div class="modal-window">
+    <h3>Transaction Details</h3>
+
+    <p><strong>Date:</strong> {{ selectedTransaction?.purchase_date | date:'medium' }}</p>
+    <p><strong>Total:</strong> £{{ selectedTransaction?.total_price | number:'1.2-2' }}</p>
+
+    <h4>Items Ordered</h4>
+
+    <div *ngFor="let group of groupedItems | keyvalue">
+      <h3>{{ group.key }}</h3>
+
+      <div class="modal-item" *ngFor="let item of group.value">
+        <div>{{ item.name }}</div>
+        <div>Qty: {{ item.quantity }}</div>
+        <div>£{{ item.price_at_purchase | number:'1.2-2' }}</div>
+      </div>
+    </div>
+
+    <button (click)="closeModal()" class="close-btn">Close</button>
+  </div>
+</div>
+
+
+<div class="modal-backdrop" *ngIf="showPasswordModal">
+  <div class="modal-window small">
+    <h3>Reset Password</h3>
+
+    <div class="form-group">
+      <label>New Password</label>
+      <input type="password" [(ngModel)]="newPassword" placeholder="Enter new password" />
+    </div>
+
+    <div class="form-group">
+      <label>Confirm Password</label>
+      <input type="password" [(ngModel)]="confirmPassword" placeholder="Confirm new password" />
+    </div>
+
+    <div class="modal-actions">
+      <button class="cancel" (click)="closePasswordModal()">Cancel</button>
+      <button (click)="confirmPasswordChange()">Confirm</button>
+    </div>
+
+    <p *ngIf="passwordMessage"
+      class="message"
+      [ngClass]="{
+        'success': passwordMessage.toLowerCase().includes('success'),
+        'error': !passwordMessage.toLowerCase().includes('success')
+      }">
+      {{ passwordMessage }}
+    </p>
+  </div>
+</div>
+

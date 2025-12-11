@@ -1,0 +1,23 @@
+<button class="back-button" (click)="home()">← Back to Supermarkets</button>
+<div class="chart-container">
+  <h2>Top Selling Items</h2>
+
+  <div class="limit-controls">
+    <label>Items to display:</label>
+    <input
+      type="number"
+      [(ngModel)]="limit"
+      [max]="overallTotal"
+      min="1"
+    />
+    <button (click)="applyLimit()">Apply</button>
+    <span class="total-label">Max: {{ overallTotal }}</span>
+  </div>
+
+  <p *ngIf="loading">Loading chart...</p>
+  <p *ngIf="errorMessage" class="error">{{ errorMessage }}</p>
+
+  <div class="chart-wrapper">
+    <canvas id="topSellingChart"></canvas>
+  </div>
+</div>

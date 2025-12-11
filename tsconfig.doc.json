@@ -1,0 +1,11 @@
+{
+  "tsconfig": "tsconfig.app.json",
+  "serve": true,
+  "exclude": [
+    "src/app/app.config.ts",
+    "src/app/app.routes.ts",
+    "src/app/app.ts",
+    "src/app/components/test-web-service/test-web-service.ts",
+    "documentation/**"
+  ]
+}

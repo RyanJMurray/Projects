@@ -1,0 +1,40 @@
+<div class="login-wrapper">
+  <div class="login-card">
+    <h2>Get ready to shop!</h2>
+    <p class="subtitle">Please log in to continue</p>
+
+    <form (ngSubmit)="onLogin()" #loginForm="ngForm">
+      <div class="form-group">
+        <label for="email">Email</label>
+        <input
+          id="email"
+          type="email"
+          name="email"
+          [(ngModel)]="email"
+          required
+          placeholder="Enter your email"
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input
+          id="password"
+          type="password"
+          name="password"
+          [(ngModel)]="password"
+          required
+          placeholder="Enter your password"
+        />
+      </div>
+
+      <button type="submit" [disabled]="!loginForm.valid">Login</button>
+    </form>
+    <p class="signup-link">
+      Don’t have an account?
+      <a (click)="goToRegister()">Sign up here</a>
+    </p>
+
+    <p *ngIf="errorMessage" class="error">{{ errorMessage }}</p>
+  </div>
+</div>

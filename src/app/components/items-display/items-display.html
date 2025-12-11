@@ -1,0 +1,199 @@
+<app-basket-icon></app-basket-icon>
+<app-profile-icon></app-profile-icon>
+
+<div class="items-page">
+  <div class="header">
+    <button class="back-button" (click)="home()">← Back to Supermarkets</button>
+  </div>
+
+  <h2 class="section-title">{{ supermarketName }}</h2>
+  <p class="subtitle">📍 {{ location }}</p>
+
+  <div *ngIf="loading" class="loading">Loading items...</div>
+  <div *ngIf="errorMessage" class="error">{{ errorMessage }}</div>
+  <div *ngIf="!loading && items.length === 0" class="empty">No items available.</div>
+
+  <div class="filter-bar">
+    <input
+      type="text"
+      placeholder="🔍 Search by Item Name"
+      [(ngModel)]="filters.name"
+    />
+    <input
+      type="text"
+      placeholder="🏷️ Search by Category"
+      [(ngModel)]="filters.category"
+    />
+    <input
+      type="number"
+      placeholder="💷 Min Price"
+      [(ngModel)]="filters.min_price"
+    />
+    <input
+      type="number"
+      placeholder="💷 Max Price"
+      [(ngModel)]="filters.max_price"
+    />
+
+    <select [(ngModel)]="filters.sort_field">
+      <option value="price">Sort by Price</option>
+      <option value="name">Sort by Name</option>
+      <option value="category">Sort by Category</option>
+    </select>
+
+    <select [(ngModel)]="filters.sort_by">
+      <option value="asc">Ascending</option>
+      <option value="desc">Descending</option>
+    </select>
+
+    <button (click)="applyFilters()">Apply</button>
+    <button class="clear" (click)="clearFilters()">Clear</button>
+  </div>
+
+  <div class="action-bar" *ngIf="isOwner">
+    <div class="action-buttons">
+      <button class="toggle-edit-btn" (click)="toggleEditMode()">
+        {{ editMode ? '✅ Done Editing' : '✏️ Edit Items' }}
+      </button>
+
+      <button class="toggle-create-btn" (click)="openCreateModal()">
+        ➕ Add New Item
+      </button>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" *ngIf="showCreateModal" (click)="closeCreateModal()"></div>
+
+  <div class="modal" *ngIf="showCreateModal">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <h3>Add New Item</h3>
+      <form class="create-item-form" (ngSubmit)="createItem()" #itemForm="ngForm">
+        <div class="form-group">
+          <label for="name">Item Name</label>
+          <input type="text" id="name" name="name" [(ngModel)]="newItem.name" required />
+        </div>
+
+        <div class="form-group">
+          <label for="price">Price (£)</label>
+          <input type="number" id="price" name="price" step="0.01" [(ngModel)]="newItem.price" required />
+        </div>
+
+        <div class="form-group">
+          <label for="stock">Stock</label>
+          <input type="number" id="stock" name="stock" [(ngModel)]="newItem.stock" required />
+        </div>
+
+        <div class="form-group">
+          <label for="category">Category</label>
+          <input type="text" id="category" name="category" [(ngModel)]="newItem.category" required />
+        </div>
+
+        <div class="form-group">
+          <label for="description">Description</label>
+          <textarea id="description" name="description" [(ngModel)]="newItem.description" required></textarea>
+        </div>
+
+        <div class="modal-buttons">
+          <button type="button" class="cancel-btn" (click)="closeCreateModal()">Cancel</button>
+          <button type="submit" class="submit-btn">Create Item</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="items-grid">
+    <div *ngFor="let item of items" class="item-card">
+      <div class="image-container">
+        <img [src]="item.image_url || 'assets/default-item.png'" [alt]="item.name" />
+
+        <div *ngIf="isOwner && editMode" class="image-upload-overlay">
+          <label class="upload-btn">
+            🖼 Change Image
+            <input type="file" (change)="onItemImageSelected($event, item)" accept="image/*" hidden />
+          </label>
+          <button class="remove-btn" (click)="removeItemImage(item)">
+            ❌ Remove
+          </button>
+        </div>
+      </div>
+
+      <p class="item-category">{{ item.category }}</p>
+
+      <div class="item-content">
+        <ng-container *ngIf="!editMode">
+          <div class="product-name">{{ item.name }}</div>
+
+          <button class="details" (click)="item.showDescription = !item.showDescription">
+            {{ item.showDescription ? '▲ Hide Details' : '▼ View Description' }}
+          </button>
+
+          <p *ngIf="item.showDescription" class="description">
+            {{ item.description }}
+          </p>
+
+          <div class="price-stock">
+            <span class="price">£{{ item.price | number: '1.2-2' }}</span>
+            <div class="stock-group">
+              <span class="stock">🕒 {{ item.stock }} in stock</span>
+              <span *ngIf="item.stock < 10" class="low-stock">Low Stock</span>
+            </div>
+          </div>
+
+          <div class="quantity-controls">
+            <button (click)="decreaseQuantity(item)" [disabled]="getQuantity(item) <= 1">−</button>
+            <span>{{ getQuantity(item) }}</span>
+            <button (click)="increaseQuantity(item)" [disabled]="getQuantity(item) >= item.stock">+</button>
+          </div>
+
+          <button class="add-cart" (click)="addToBasket(item)">Add to Cart</button>
+        </ng-container>
+
+        <ng-container *ngIf="editMode && isOwner">
+          <div class="editable-field">
+            <label>Name:</label>
+            <div class="editable-value">
+              <input *ngIf="editingField === 'name' + item._id" [(ngModel)]="item.name" type="text" />
+              <span *ngIf="editingField !== 'name' + item._id">{{ item.name }}</span>
+              <button *ngIf="editingField !== 'name' + item._id" (click)="editField('name' + item._id)">✏️</button>
+              <button *ngIf="editingField === 'name' + item._id" (click)="saveField(item, 'name')">💾</button>
+            </div>
+          </div>
+
+          <div class="editable-field">
+            <label>Price (£):</label>
+            <div class="editable-value">
+              <input *ngIf="editingField === 'price' + item._id" [(ngModel)]="item.price" type="number" step="0.01" />
+              <span *ngIf="editingField !== 'price' + item._id">£{{ item.price | number: '1.2-2' }}</span>
+              <button *ngIf="editingField !== 'price' + item._id" (click)="editField('price' + item._id)">✏️</button>
+              <button *ngIf="editingField === 'price' + item._id" (click)="saveField(item, 'price')">💾</button>
+            </div>
+          </div>
+
+          <div class="editable-field">
+            <label>Stock:</label>
+            <div class="editable-value">
+              <input *ngIf="editingField === 'stock' + item._id" [(ngModel)]="item.stock" type="number" />
+              <span *ngIf="editingField !== 'stock' + item._id">{{ item.stock }}</span>
+              <button *ngIf="editingField !== 'stock' + item._id" (click)="editField('stock' + item._id)">✏️</button>
+              <button *ngIf="editingField === 'stock' + item._id" (click)="saveField(item, 'stock')">💾</button>
+            </div>
+          </div>
+
+          <div class="delete-container">
+            <button class="delete-btn" (click)="deleteItem(item._id)">🗑 Delete Item</button>
+          </div>
+        </ng-container>
+      </div>
+    </div>
+  </div>
+
+  <div class="pagination-controls">
+    <button (click)="prevPage()" [disabled]="currentPage === 1">← Prev</button>
+    <select [(ngModel)]="currentPage" (change)="goToPage()">
+      <option *ngFor="let p of pagesArray" [value]="p">
+        Page {{ p }}
+      </option>
+    </select>
+    <button (click)="nextPage()" [disabled]="currentPage === totalPages">Next →</button>
+  </div>
+</div>

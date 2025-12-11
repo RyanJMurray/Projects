@@ -1,0 +1,6 @@
+<div class="profile-avatar" (click)="goToProfile()">
+<img *ngIf="profileImage; else initialsBlock" [src]="profileImage" alt="Profile Image" class="avatar-img" />
+<ng-template #initialsBlock>
+  <div class="initials">{{ initials }}</div>
+</ng-template>
+</div>
